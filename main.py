@@ -8,6 +8,17 @@ from src.teknik_analiz import (
 from src.veri_kontrol import veri_kontrol_et, son_eksik_gunu_temizle
 
 
+from src.grafik import (
+    fiyat_grafigi_olustur,
+    rsi_grafigi_olustur,
+    macd_grafigi_olustur,
+    birlesik_grafik_olustur
+)
+
+
+
+
+
 def main():
 
     print("\n=== HISSE PUSULA ===")
@@ -51,6 +62,13 @@ def main():
     # 6. Teknik gostergeleri hesapla
     analiz = teknik_gostergeleri_hesapla(veriler)
 
+    print("\n=== SON 5 GUNLUK HACIM ANALIZI ===")
+    print(
+        analiz[
+            ["Volume", "Hacim_MA20", "Hacim_Orani"]
+        ].tail().round(2)
+    )
+
 
     # 7. Son 5 islem gununu goster
     print("\n=== SON 5 ISLEM GUNU ===")
@@ -74,7 +92,11 @@ def main():
 
     # 8. Teknik analiz yorumlarini goster
     teknik_analizi_yorumla(analiz)
-
+    #fiyat_grafigi_olustur(analiz, hisse_kodu)
+    #rsi_grafigi_olustur(analiz, hisse_kodu)
+    #macd_grafigi_olustur(analiz, hisse_kodu)
+    
+    birlesik_grafik_olustur(analiz, hisse_kodu)
 
 if __name__ == "__main__":
     main()

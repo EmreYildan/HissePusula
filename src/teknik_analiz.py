@@ -161,6 +161,19 @@ def teknik_gostergeleri_hesapla(veriler):
         (onceki_fark >= 0) & (fark < 0)
     )
 
+    # ======================================
+    # ISLEM HACMI ANALIZI
+    # ======================================
+
+    # Son 20 gunun ortalama islem hacmi
+    veriler["Hacim_MA20"] = veriler["Volume"].rolling(window=20).mean()
+
+    # Guncel hacmin ortalama hacme orani
+    veriler["Hacim_Orani"] = (
+        veriler["Volume"] /
+        veriler["Hacim_MA20"].replace(0, np.nan)
+    )
+
     return veriler
 
     
@@ -534,4 +547,63 @@ def teknik_analizi_yorumla(analiz):
 
 
 
+    # ======================================
+    # ISLEM HACMI YORUMU
+    # ======================================
+
+    hacim = son["Volume"]
+    hacim_ortalama = son["Hacim_MA20"]
+    hacim_orani = son["Hacim_Orani"]
+
+    print("\n=== ISLEM HACMI ANALIZI ===")
+    print(f"Guncel islem hacmi: {hacim:,.0f}")
+    print(f"20 gunluk ortalama hacim: {hacim_ortalama:,.0f}")
+    print(f"Hacim orani: {hacim_orani:.2f}")
+
+    if pd.isna(hacim_orani):
+        print("Hacim orani hesaplanamadi.")
+    elif hacim_orani >= 1.50:
+        print("Islem hacmi ortalamanin belirgin uzerinde.")
+    elif hacim_orani < 0.75:
+        print("Islem hacmi ortalamanin belirgin altinda.")
+    else:
+        print("Islem hacmi normal aralikta.")
+
+
+    # ======================================
+    # FIYAT VE HACIM ILISKISI
+    # ======================================
+
+    onceki_kapanis = analiz["Close"].iloc[-2]
+    guncel_kapanis = son["Close"]
+
+    fiyat_degisim_yuzde = (
+        (guncel_kapanis - onceki_kapanis)
+        / onceki_kapanis
+    ) * 100
+
+    print("\n=== FIYAT VE HACIM ILISKISI ===")
+    print(f"Gunluk fiyat degisimi: %{fiyat_degisim_yuzde:.2f}")
+
+    if pd.isna(hacim_orani):
+        print("Hacim verisi yeterli olmadigi icin yorum yapilamadi.")
+
+    elif fiyat_degisim_yuzde > 0:
+        if hacim_orani >= 1.50:
+            print("Fiyat yukselirken islem hacmi de yuksek. Yukselis hacimle destekleniyor olabilir.")
+        elif hacim_orani < 0.75:
+            print("Fiyat yukseliyor ancak islem hacmi dusuk. Yukselisin hacim destegi zayif olabilir.")
+        else:
+            print("Fiyat yukseliyor ve islem hacmi normal aralikta.")
+
+    elif fiyat_degisim_yuzde < 0:
+        if hacim_orani >= 1.50:
+            print("Fiyat duserken islem hacmi yuksek. Satis baskisi guclu olabilir.")
+        elif hacim_orani < 0.75:
+            print("Fiyat dusuyor ancak islem hacmi dusuk. Dusus sinirli hacimle gerceklesiyor.")
+        else:
+            print("Fiyat dusuyor ve islem hacmi normal aralikta.")
+
+    else:
+        print("Fiyat onceki islem gunune gore degismedi.")
 
