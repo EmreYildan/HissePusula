@@ -64,10 +64,13 @@ def main():
                 "RSI14",
                 "MACD",
                 "MACD_Sinyal",
-                "MACD_Histogram"
+                "MACD_Histogram",
+                "BB_Orta",
+                "BB_Ust",
+                "BB_Alt"
             ]
-        ].tail()
-    )
+            ].tail().round(2)
+        )
 
     # 8. Teknik analiz yorumlarini goster
     teknik_analizi_yorumla(analiz)
