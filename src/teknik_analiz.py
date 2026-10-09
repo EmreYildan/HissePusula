@@ -31,6 +31,25 @@ def teknik_gostergeleri_hesapla(veriler):
         window=50
     ).mean()
 
+    
+    # ======================================
+    # BOLLINGER BANTLARI
+    # ======================================
+
+    standart_sapma = veriler["Close"].rolling(window=20).std(ddof=0)
+
+    veriler["BB_Orta"] = veriler["MA20"]
+    veriler["BB_Ust"] = veriler["BB_Orta"] + (2 * standart_sapma)
+    veriler["BB_Alt"] = veriler["BB_Orta"] - (2 * standart_sapma)
+    
+    # Bollinger bant genisligi (%)
+    veriler["BB_Genislik"] = (
+        (veriler["BB_Ust"] - veriler["BB_Alt"])
+        / veriler["BB_Orta"].replace(0, np.nan)
+    ) * 100
+
+
+
     # ======================================
     # RSI14 - Wilder Yontemi
     # ======================================
@@ -155,6 +174,7 @@ def teknik_gostergeleri_hesapla(veriler):
 def teknik_analizi_yorumla(analiz):
 
     son = analiz.iloc[-1]
+    fiyat = son["Close"]
 
     kapanis = son["Close"]
     ma20 = son["MA20"]
@@ -327,6 +347,153 @@ def teknik_analizi_yorumla(analiz):
                 "MACD sinyal cizgisinin altinda. "
                 "Zayif momentum gorunumu devam ediyor."
             )
+            
+    # ======================================
+    # SON MACD KESISIM TARIHI
+    # ======================================
+
+    kesisimler = analiz[
+        analiz["MACD_Yukari_Kesisim"] |
+        analiz["MACD_Asagi_Kesisim"]
+    ]
+
+    print("\n=== SON MACD KESISIMI ===")
+
+    if not kesisimler.empty:
+        son_kesisim = kesisimler.iloc[-1]
+        son_tarih = kesisimler.index[-1]
+
+        print("Kesisim tarihi:", son_tarih.strftime("%d.%m.%Y"))
+
+        if son_kesisim["MACD_Yukari_Kesisim"]:
+            print("Kesisim yonu: YUKARI")
+        else:
+            print("Kesisim yonu: ASAGI")
+
+    else:
+        print("Incelenen veri araliginda MACD kesisimi bulunamadi.")
+
+            
+    # ======================================
+    # BOLLINGER BANTLARI YORUMU
+    # ======================================
+
+    bb_orta = son["BB_Orta"]
+    bb_ust = son["BB_Ust"]
+    bb_alt = son["BB_Alt"]
+
+    print("\n=== BOLLINGER BANTLARI ===")
+    print(f"Ust bant: {bb_ust:.2f}")
+    print(f"Orta bant: {bb_orta:.2f}")
+    print(f"Alt bant: {bb_alt:.2f}")
+
+    if fiyat > bb_ust:
+        print(
+            "Fiyat ust bandin uzerinde. "
+            "Yukari yonlu hareket guclu olabilir, "
+            "ancak fiyat ortalamadan uzaklasmis durumda."
+        )
+
+    elif fiyat < bb_alt:
+        print(
+            "Fiyat alt bandin altinda. "
+            "Asagi yonlu hareket guclu olabilir, "
+            "ancak fiyat ortalamadan uzaklasmis durumda."
+        )
+
+    elif fiyat > bb_orta:
+        print(
+            "Fiyat bantlarin icinde ve orta bandin uzerinde. "
+            "Kisa vadeli fiyat gorunumu goreceli olarak olumlu."
+        )
+
+    elif fiyat < bb_orta:
+        print(
+            "Fiyat bantlarin icinde ve orta bandin altinda. "
+            "Kisa vadeli fiyat gorunumu goreceli olarak zayif."
+        )
+
+    else:
+        print("Fiyat orta bant seviyesinde.")
+        
+    # ======================================
+    # BOLLINGER BANT GENISLIGI YORUMU
+    # ======================================
+
+    son_genislik = analiz["BB_Genislik"].iloc[-1]
+    onceki_genislik = analiz["BB_Genislik"].iloc[-2]
+
+    print("\n=== BOLLINGER BANT GENISLIGI ===")
+    print(f"Guncel bant genisligi: %{son_genislik:.2f}")
+
+    if son_genislik > onceki_genislik:
+        print(
+            "Bantlar bir onceki islem gunune gore genisledi. "
+            "Fiyat dalgalanmasi artiyor olabilir."
+        )
+
+    elif son_genislik < onceki_genislik:
+        print(
+            "Bantlar bir onceki islem gunune gore daraldi. "
+            "Fiyat dalgalanmasi azaliyor olabilir."
+        )
+
+    else:
+        print("Bant genisliginde degisim yok.")
+
+        
+    # ======================================
+    # GENEL TEKNIK ANALIZ OZETI
+    # ======================================
+
+    puan = 0
+
+    # 1. Trend kontrolu
+    if kapanis > ma20 and kapanis > ma50:
+        puan += 1
+
+    # 2. RSI kontrolu
+    if rsi > 50:
+        puan += 1
+
+    # 3. MACD kontrolu
+    if macd > macd_sinyal:
+        puan += 1
+
+    print("\n=== GENEL TEKNIK ANALIZ OZETI ===")
+    print(f"Olumlu gosterge sayisi: {puan}/3")
+
+    if puan == 3:
+        print(
+            "Teknik gostergeler genel olarak "
+            "olumlu bir gorunume isaret ediyor."
+        )
+
+    elif puan == 2:
+        print(
+            "Teknik gostergelerin cogunlugu olumlu, "
+            "ancak tum gostergeler ayni yonde degil."
+        )
+
+    elif puan == 1:
+        print(
+            "Teknik gostergelerin cogunlugu zayif. "
+            "Sinirli toparlanma belirtileri olabilir."
+        )
+
+    else:
+        print(
+            "Teknik gostergeler genel olarak "
+            "zayif bir gorunume isaret ediyor."
+        )
+
+    print(
+        "Not: Bu degerlendirme yatirim tavsiyesi "
+        "veya kesin fiyat tahmini degildir."
+    )
+
+                        
+
 
 
 
