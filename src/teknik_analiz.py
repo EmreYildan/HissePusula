@@ -329,6 +329,42 @@ def teknik_analizi_yorumla(analiz):
             )
 
 
+    # ======================================
+    # SON MACD KESISIM TARIHI
+    # ======================================
+
+    kesisimler = analiz[
+        analiz["MACD_Yukari_Kesisim"] |
+        analiz["MACD_Asagi_Kesisim"]
+    ]
+
+    print("\n=== SON MACD KESISIMI ===")
+
+    if not kesisimler.empty:
+        son_kesisim = kesisimler.iloc[-1]
+        son_tarih = kesisimler.index[-1]
+
+        print(
+            "Kesisim tarihi:",
+            son_tarih.strftime("%d.%m.%Y")
+        )
+
+        if son_kesisim["MACD_Yukari_Kesisim"]:
+            print("Kesisim yonu: YUKARI")
+            print(
+                "Bu tarihte MACD sinyal cizgisinin "
+                "uzerine cikti."
+            )
+        else:
+            print("Kesisim yonu: ASAGI")
+            print(
+                "Bu tarihte MACD sinyal cizgisinin "
+                "altina indi."
+            )
+
+    else:
+        print("Veri araliginda MACD kesisimi bulunamadi.")
+
 
 
 
