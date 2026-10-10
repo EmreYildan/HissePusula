@@ -1,5 +1,6 @@
 
 import pandas as pd
+import numpy as np
 
 
 def veri_kontrol_et(veriler):
@@ -78,6 +79,8 @@ def veri_kontrol_et(veriler):
         return False, "Negatif islem hacmi bulundu."
 
     # Gun ici fiyat tutarliligi
+   
+    # Gun ici fiyat tutarliligi
     en_yuksek = veriler[
         ["Open", "Close", "Low"]
     ].max(axis=1)
@@ -86,12 +89,50 @@ def veri_kontrol_et(veriler):
         ["Open", "Close", "High"]
     ].min(axis=1)
 
-    if (veriler["High"] < en_yuksek).any():
+    # Cok kucuk sayisal hassasiyet farklarini tolere et
+    tolerans = 1e-8
+
+    high_hatali = (
+        (veriler["High"] < en_yuksek)
+        & ~np.isclose(
+            veriler["High"],
+            en_yuksek,
+            rtol=0,
+            atol=tolerans
+        )
+    )
+
+    low_hatali = (
+        (veriler["Low"] > en_dusuk)
+        & ~np.isclose(
+            veriler["Low"],
+            en_dusuk,
+            rtol=0,
+            atol=tolerans
+        )
+    )
+
+    if high_hatali.any():
+        print("\n=== HATALI HIGH SATIRLARI ===")
+        print(
+            veriler.loc[
+                high_hatali,
+                ["Open", "High", "Low", "Close"]
+            ].head(10).to_string()
+        )
         return False, "High fiyatinda tutarsizlik var."
 
-    if (veriler["Low"] > en_dusuk).any():
+    if low_hatali.any():
+        print("\n=== HATALI LOW SATIRLARI ===")
+        print(
+            veriler.loc[
+                low_hatali,
+                ["Open", "High", "Low", "Close"]
+            ].head(10).to_string()
+        )
         return False, "Low fiyatinda tutarsizlik var."
-
+   
+   
     return True, (
         f"Veri kontrolu basarili. "
         f"{len(veriler)} islem gunu incelendi."

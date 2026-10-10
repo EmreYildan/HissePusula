@@ -62,6 +62,18 @@ def main():
     # 6. Teknik gostergeleri hesapla
     analiz = teknik_gostergeleri_hesapla(veriler)
 
+    
+    print("\n=== SON 5 GUN ATR ANALIZI ===")
+    print(
+        analiz[
+            ["Close", "High", "Low", "ATR14", "ATR_Yuzde"]
+        ]
+        .tail()
+        .round(2)
+    )
+
+
+    
     print("\n=== SON 5 GUNLUK HACIM ANALIZI ===")
     print(
         analiz[
@@ -89,7 +101,14 @@ def main():
             ]
             ].tail().round(2)
         )
-
+    print("\n=== SON 5 GUN DESTEK VE DIRENC ===")
+    print(
+        analiz[
+            ["Close", "Destek20", "Direnc20"]
+        ]
+        .tail()
+        .round(2)
+    )
     # 8. Teknik analiz yorumlarini goster
     teknik_analizi_yorumla(analiz)
     #fiyat_grafigi_olustur(analiz, hisse_kodu)
