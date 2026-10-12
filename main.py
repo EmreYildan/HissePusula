@@ -1,4 +1,4 @@
-
+import pandas as pd
 from src.hisse_arama import hisse_kodu_bul
 from src.veri_cekme import hisse_verisi_cek
 from src.teknik_analiz import (
@@ -15,7 +15,9 @@ from src.grafik import (
     birlesik_grafik_olustur
 )
 
+from src.getiri_analizi import gecmis_getirileri_hesapla
 
+from src.risk_analizi import risk_analizi_hesapla
 
 
 
@@ -60,9 +62,54 @@ def main():
         return
 
     # 6. Teknik gostergeleri hesapla
-    analiz = teknik_gostergeleri_hesapla(veriler)
+    analiz = teknik_gostergeleri_hesapla(veriler)       
+    # Uzun vadeli gecmis getirileri hesapla
+    analiz = gecmis_getirileri_hesapla(analiz)
+    analiz = risk_analizi_hesapla(analiz)   
+    son = analiz.iloc[-1]
+
+    print("\n========== UZUN VADELI GETIRI ANALIZI ==========")
+
+    donemler = {
+        "6 Aylik": "Getiri_6A",
+        "12 Aylik": "Getiri_12A",
+        "24 Aylik": "Getiri_24A"
+    }
+
+    for donem, sutun in donemler.items():
+        deger = son[sutun]
+
+        if pd.isna(deger):
+            print(f"{donem} Getiri: Yetersiz gecmis veri")
+        else:
+            print(f"{donem} Getiri: %{deger:.2f}")
+
+
+    # ==========================================
+    # RISK ANALIZI SONUCLARI
+    # ==========================================
+
+    son = analiz.iloc[-1]
+
+    print("\n========== RISK ANALIZI ==========")
+
+    volatilite = son["Volatilite_252"]
+    maksimum_dusus = son["Max_Drawdown"]
+    guncel_dusus = son["Drawdown"]
+
+    if pd.isna(volatilite):
+        print("Yillik Volatilite: Yetersiz veri")
+    else:
+        print(f"Yillik Volatilite: %{volatilite:.2f}")
+
+    print(f"Maksimum Dusus: %{maksimum_dusus:.2f}")
+    print(f"Guncel Zirveden Dusus: %{guncel_dusus:.2f}")
+
+    print("=================================")
 
     
+    print("================================================")
+
     print("\n=== SON 5 GUN ATR ANALIZI ===")
     print(
         analiz[
