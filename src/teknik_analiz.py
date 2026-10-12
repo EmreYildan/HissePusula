@@ -198,6 +198,7 @@ def teknik_analizi_yorumla(analiz):
     kapanis = son["Close"]
     ma20 = son["MA20"]
     ma50 = son["MA50"]
+    ma200 = son["MA200"]
     rsi = son["RSI14"]
     macd = son["MACD"]
     macd_sinyal = son["MACD_Sinyal"]
@@ -206,6 +207,53 @@ def teknik_analizi_yorumla(analiz):
     print("\nSon kapanis:", round(kapanis, 2))
     print("MA20:", round(ma20, 2))
     print("MA50:", round(ma50, 2))
+    
+    # ======================================
+    # UZUN VADELI TREND ANALIZI - MA200
+    # ======================================
+
+    print("\n=== UZUN VADELI TREND ANALIZI ===")
+
+    if pd.isna(ma200):
+        print("MA200 icin yeterli veri yok.")
+
+    else:
+        print(f"MA200: {ma200:.2f} TL")
+
+        # Fiyatin MA200'e uzakligi
+        uzaklik = ((kapanis / ma200) - 1) * 100
+
+        print(f"MA200'e uzaklik: %{uzaklik:.2f}")
+
+        if kapanis > ma200:
+            print("Fiyat MA200'un uzerinde.")
+            print("Uzun vadeli fiyat konumu olumlu.")
+
+        elif kapanis < ma200:
+            print("Fiyat MA200'un altinda.")
+            print("Uzun vadeli fiyat konumu zayif.")
+
+        else:
+            print("Fiyat MA200 seviyesinde.")
+
+        # MA200'un son 20 islem gunundeki yonu
+        if len(analiz) >= 220:
+            eski_ma200 = analiz["MA200"].iloc[-21]
+
+            if pd.notna(eski_ma200):
+                degisim = ((ma200 / eski_ma200) - 1) * 100
+
+                print(f"MA200 degisimi (20 gun): %{degisim:.2f}")
+
+                if degisim > 0:
+                    print("MA200 yukseliyor.")
+
+                elif degisim < 0:
+                    print("MA200 dusuyor.")
+
+                else:
+                    print("MA200 yatay seyrediyor.")
+
     print("RSI14:", round(rsi, 2))
     # Trend analizi
     if kapanis > ma20 and kapanis > ma50:
