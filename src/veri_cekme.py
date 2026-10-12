@@ -3,7 +3,7 @@ import yfinance as yf
 from pathlib import Path
 
 
-def hisse_verisi_cek(hisse_kodu, donem="1y"):
+def hisse_verisi_cek(hisse_kodu, donem="10y"):
     # Hisse kodunu düzenle
     hisse_kodu = hisse_kodu.strip().upper()
 

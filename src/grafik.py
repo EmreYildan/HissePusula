@@ -170,19 +170,22 @@ def macd_grafigi_olustur(analiz, hisse_kodu):
 def birlesik_grafik_olustur(analiz, hisse_kodu):
 
     
+    
     fig = make_subplots(
-        rows=4,
+        rows=5,
         cols=1,
         shared_xaxes=True,
-        vertical_spacing=0.05,
-        row_heights=[0.4, 0.2, 0.2, 0.2],
+        vertical_spacing=0.04,
+        row_heights=[0.36, 0.16, 0.16, 0.16, 0.16],
         subplot_titles=[
             "Fiyat ve Teknik Gostergeler",
             "RSI14",
             "MACD",
-            "Islem Hacmi"
+            "Islem Hacmi",
+            "ATR14 - Volatilite"
         ]
     )
+
 
 
     # 1. Grafik: Kapanis fiyati
@@ -368,10 +371,32 @@ def birlesik_grafik_olustur(analiz, hisse_kodu):
         col=1
     )
 
+    # ======================================
+    # 5. Grafik: ATR14
+    # ======================================
+
+    fig.add_trace(
+        go.Scatter(
+            x=analiz.index,
+            y=analiz["ATR14"],
+            mode="lines",
+            name="ATR14",
+            line=dict(color="darkmagenta", width=2)
+        ),
+        row=5,
+        col=1
+    )
+
+    fig.update_yaxes(
+        title_text="ATR (TL)",
+        row=5,
+        col=1
+    )
+
 
     fig.update_layout(
         title=f"{hisse_kodu} - Birlesik Teknik Analiz",
-        height=1100,
+        height=1300,
         hovermode="x unified",
         template="plotly_white"
     )
