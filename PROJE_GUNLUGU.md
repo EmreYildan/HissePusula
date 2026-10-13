@@ -1,171 +1,145 @@
-# Hisse Pusula — Proje Geliştirme Günlüğü
+# Hisse Pusula 📈
 
-> Bu belge, bitirme projesi boyunca gerçekleştirilen işlemleri, kullanılan araçları, teknik kararları, karşılaşılan sorunları ve sonraki adımları kaydetmek için hazırlanmıştır.
+**Borsa İstanbul (BIST) hisseleri için Python tabanlı teknik analiz, geçmiş getiri ve risk araştırma projesi.**
 
-**Proje adı:** Hisse Pusula  
-**Akademik başlık:** BIST Hisse Senetlerinin Teknik Analizi ve Makine Öğrenmesi ile Fiyat Yönü Tahmini  
-**Çalışma biçimi:** Bireysel bitirme projesi  
-**Başlangıç tarihi:** 8 Ekim 2026  
-**Geliştirme ortamı:** Windows, Visual Studio Code, Python 3.11.0
+Hisse Pusula, bir hisse senedinin tarihsel fiyat ve hacim verilerini inceleyerek teknik göstergeleri, farklı yatırım ufuklarındaki geçmiş getirileri ve risk ölçülerini anlaşılır biçimde sunmayı amaçlayan bireysel bir bitirme projesidir. İlerleyen aşamalarda hisseler arası karşılaştırma, temel analiz, açıklanabilir puanlama ve geriye dönük değerlendirme eklenecektir.
 
-## 1. Projenin amacı
+> **Uyarı:** Bu proje eğitim ve araştırma amaçlıdır. Yatırım tavsiyesi vermez; geçmiş performans gelecekteki getiriyi garanti etmez. Mevcut sürüm gelecek fiyatları tahmin etmez.
 
-Borsa İstanbul'da işlem gören seçili hisselerin tarihsel fiyat ve işlem hacmi verilerini analiz etmek; teknik göstergeleri hesaplamak; makine öğrenmesiyle gelecek beş işlem günündeki fiyat yönü için olasılıksal tahminler üretmek; risk göstergelerini ve model performansını web arayüzünde sunmak.
+## Mevcut durum
 
-**Not:** Sistem kesin fiyat tahmini veya yatırım tavsiyesi vermek için değil, analiz ve akademik karar desteği için geliştirilecektir.
+| Bileşen | Durum |
+| --- | --- |
+| Hisse adı/kodu arama | Çalışıyor |
+| Yahoo Finance üzerinden OHLCV verisi çekme ve CSV'ye kaydetme | Çalışıyor |
+| Veri kalite kontrolü ve son eksik günü temizleme | Çalışıyor |
+| Teknik göstergeler ve birleşik Plotly grafiği | Çalışıyor |
+| 6, 12 ve 24 aylık geçmiş getiri analizi | Çalışıyor |
+| 6, 12 ve 24 aylık volatilite ve maksimum düşüş | Çalışıyor |
+| Eksik hafta içi tarihlerini bulma | Çalışıyor; resmî tatil ayrımı henüz tüm yılları kapsamıyor |
+| CSV tabanlı BIST tatil takvimi (2026 tam/yarım gün ayrımı) | İlk sürüm tamamlandı |
+| Otomatik testler | Son bildirilen çalıştırmada **31 test başarılı** |
+| Çoklu hisse karşılaştırma | İlk modül taslağı hazır; entegrasyon ve testler tamamlanmadı |
+| Temel analiz, puanlama, backtest, makine öğrenmesi, web arayüzü | Planlanıyor |
 
-## 2. Planlanan kapsam
+## Kullanılan teknolojiler
 
-- Başlangıçta THYAO için veri çekme ve kalite kontrolü
-- Sonrasında ASELS, TUPRS, BIMAS ve AKBNK verilerinin denenmesi
-- RSI, MACD, hareketli ortalamalar ve volatilite hesaplamaları
-- Logistic Regression, Random Forest ve XGBoost modellerinin karşılaştırılması
-- Zaman sıralı eğitim/doğrulama/test değerlendirmesi
-- Streamlit ile grafik ve sonuçların gösterimi
-- İsteğe bağlı: açıklanabilirlik (SHAP), strateji simülasyonu
+- **Python 3.11** — uygulama dili
+- **pandas, NumPy** — veri işleme ve sayısal hesaplamalar
+- **yfinance** — Yahoo Finance üzerinden geçmiş piyasa verileri
+- **Plotly** — etkileşimli grafikler
+- **unittest** — otomatik testler
+- **Git / GitHub** — sürüm kontrolü
+- **VS Code / Windows PowerShell** — geliştirme ortamı
 
-## 3. Kullanılan ve planlanan teknolojiler
-
-| Teknoloji | Kullanım amacı | Durum |
-|---|---|---|
-| Windows | Geliştirme işletim sistemi | Kullanılıyor |
-| Visual Studio Code | Kod editörü ve terminal | Kullanılıyor |
-| Python 3.11.0 | Ana programlama dili | Kurulu, sürüm kullanıcı tarafından bildirildi |
-| Python `venv` | Projeye özel sanal ortam | Oluşturuldu ve etkinleştirildi |
-| pip | Python paket yöneticisi | Kullanılıyor |
-| yfinance | Tarihsel hisse verisi alma | Kurulum denendi, henüz doğrulanmadı |
-| pandas | Veri işleme ve CSV çıktısı | Kurulum denendi, henüz doğrulanmadı |
-| NumPy / Scikit-learn / XGBoost | Analiz ve makine öğrenmesi | Planlandı |
-| Streamlit / Plotly | Web arayüzü ve grafikler | Planlandı |
-| SQLite | Yerel veri saklama | Planlandı |
-
-## 4. Geliştirme kayıtları
-
-### 8 Ekim 2026 — İlk kurulum
-
-**Yapılanlar**
-1. Proje adı **Hisse Pusula** olarak belirlendi.
-2. Windows üzerinde Visual Studio Code ile geliştirme kararı alındı.
-3. `HissePusula` proje klasörü oluşturuldu.
-4. Python 3.11.0 sürümü bildirildi.
-5. `py -3.11 -m venv .venv` komutuyla sanal ortam oluşturuldu.
-6. PowerShell'de sanal ortam etkinleştirildi; terminalde `(.venv)` görüldü.
-7. `python -m pip install yfinance pandas` komutuyla kütüphane kurulumu başlatıldı.
-
-**Karşılaşılan sorun**
-
-Paket indirme sırasında aşağıdaki mesaj alındı:
+## Proje yapısı
 
 ```text
-ERROR: Operation cancelled by user
+HissePusula/
+├── main.py
+├── README.md
+├── src/
+│   ├── hisse_arama.py
+│   ├── veri_cekme.py
+│   ├── veri_kontrol.py
+│   ├── bist_takvimi.py
+│   ├── teknik_analiz.py
+│   ├── grafik.py
+│   ├── getiri_analizi.py
+│   ├── risk_analizi.py
+│   └── hisse_karsilastirma.py  # Taslak / geliştirme aşaması
+├── tests/
+│   ├── test_teknik_analiz.py
+│   ├── test_getiri_analizi.py
+│   ├── test_risk_analizi.py
+│   └── test_bist_takvimi.py
+├── data/
+│   ├── raw/                  # İndirilen hisse CSV'leri
+│   └── processed/
+│       └── bist_tatilleri.csv
+└── models/                   # İlerideki model çalışmaları için
 ```
 
-İşlem tamamlanmadığı için `yfinance` ve `pandas` kurulumları **henüz başarılı kabul edilmiyor**. Hatanın kesin nedeni doğrulanmadı; işlem kullanıcı tarafından iptal edilmiş olabilir.
+> Dosya ağacı geliştirme planını da gösterir; `hisse_karsilastirma.py` henüz oluşturulmadıysa bu aşamada zorunlu değildir.
 
-**Planlanan çözüm ve doğrulama**
+## Kurulum ve çalıştırma
+
+Windows PowerShell'de proje klasöründe:
 
 ```powershell
-python -m pip install --upgrade pip
-python -m pip install yfinance pandas
-python -c "import yfinance; import pandas; print('Hisse Pusula kutuphaneleri hazir!')"
-```
-
-Son komut başarıyla çalışırsa paketler kurulu olarak işaretlenecek.
-
-## 5. Sıradaki işler
-
-- [ ] pip güncellemesini tamamla.
-- [ ] `yfinance` ve `pandas` kurulumunu doğrula.
-- [ ] `veri_test.py` dosyasını oluştur.
-- [ ] THYAO.IS için bir yıllık günlük fiyat verisi çek.
-- [ ] Verinin tarih, satır sayısı, boş değer, tekrar eden tarih ve hacim kontrollerini yap.
-- [ ] CSV dosyasına kaydet.
-- [ ] Diğer dört BIST hissesini dene.
-- [ ] Veri kaynağının erişim ve kullanım koşullarını değerlendir.
-
-## 6. Teknik kararlar ve gerekçeleri
-
-**Neden Python?** Finansal veri işleme, görselleştirme ve makine öğrenmesi için zengin bir kütüphane ekosistemine sahiptir.
-
-**Neden `venv`?** Projeye ait kütüphaneleri diğer Python kurulumlarından ayırır ve sürüm yönetimini kolaylaştırır.
-
-**Neden önce veri testi?** Hisse verilerine güvenilir biçimde erişilememesi, daha sonraki analiz ve model geliştirme aşamalarını doğrudan etkiler. Bu riski en başta görmek istiyoruz.
-
-**Neden ilk olarak tek hisse?** THYAO ile uçtan uca veri çekme ve kaydetme sürecini doğruladıktan sonra diğer hisselere genişlemek daha kontrollüdür.
-
-## 7. Sunum ve rapor için biriktirilecek kanıtlar
-
-- Kurulum ve kütüphane sürümlerinin terminal çıktıları
-- Veri çekme kodu ve CSV örneği
-- Veri kalite kontrol sonuçları
-- Teknik gösterge grafikleri
-- Modellerin karşılaştırma tabloları
-- Web uygulamasının ekran görüntüleri
-- Karşılaşılan hatalar ve çözümleri
-
-## 8. Günlük kayıt şablonu
-
-Yeni çalışma günlerinde aşağıdaki şablonu çoğalt:
-
-```markdown
-### YYYY-AA-GG — Çalışma başlığı
-**Hedef:**
-
-**Yapılan işlemler:**
-1.
-
-**Kullanılan araçlar / komutlar:**
-
-**Sonuç ve kanıt:**
-
-**Karşılaşılan sorunlar ve çözümler:**
-
-**Sonraki adım:**
-```
-
----
-
-*Bu belge yaşayan bir proje günlüğüdür. Her önemli aşamadan sonra gerçek sonuçlara göre güncellenmelidir.*
-
-## 9. CHECKPOINT 1 — 8 Ekim 2026: Dinamik analiz pipeline'ı çalışıyor
-
-**Durum:** Kullanıcı, `python main.py` ile veri kontrolü dahil pipeline'ın başarıyla çalıştığını bildirdi. Bu kayıt, yukarıdaki ilk kurulum dönemine ait ve artık güncelliğini yitirmiş kontrol listesi/statülerin yerine geçer.
-
-### Tamamlanan işler
-- Python 3.11 ve `.venv` ile geliştirme ortamı kuruldu; `yfinance` ve `pandas` kullanılarak veri indirme çalıştırıldı.
-- Windows'ta pandas DLL içe aktarma sorunu `pandas==2.2.3` yeniden kurulumu ile çözüldü.
-- THYAO için yaklaşık bir yıllık günlük OHLCV verisi çekilip CSV'ye kaydedildi; temel kalite kontrolleri yapıldı.
-- `src/hisse_arama.py`: bilinen şirket adları kodlara çevriliyor; sözlükte olmayan, biçimi uygun hisse kodları da veri kaynağında deneniyor. Şirket adı eşleştirme listesi henüz sınırlı.
-- `src/veri_cekme.py`: kullanıcı koduna `.IS` ekleyerek Yahoo Finance verisini çekiyor.
-- `src/veri_kontrol.py`: gerekli sütunlar, minimum 50 satır, eksik değerler, yinelenen tarihler, fiyat/hacim ve OHLC tutarlılığı denetleniyor.
-- `src/teknik_analiz.py`: MA20, MA50, RSI14 hesaplıyor; trend, hareketli ortalama ilişkisi ve RSI yorumu üretiyor.
-- `main.py`: hisse girişi → kod çözümleme → veri çekme → kalite kontrolü → teknik göstergeler → yorumlama akışını tek komutla yönetiyor.
-
-### Kullanılan komut
-```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install pandas numpy yfinance plotly
 python main.py
 ```
 
-### Mimari kararlar
-- Hesaplama fonksiyonları kullanıcı arayüzünden ayrılacak; ileride Streamlit tarafından yeniden kullanılabilecek.
-- THYAO sadece test örneği, kullanıcı farklı BIST hisselerini seçebiliyor.
-- Bilinmeyen kodun biçimsel kabulü, BIST'te listelendiğinin doğrulanması anlamına gelmiyor.
-- Mevcut kalite kontrolü yapısal tutarlılığı denetler; resmi piyasa verisiyle doğrulama değildir.
-- Teknik analiz yorumları kesin fiyat tahmini veya yatırım tavsiyesi değildir.
+Program hisse adı veya kodu ister. Örneğin `THYAO`, `ASELS` veya `TUPRS` girilebilir. Veri kaynağının desteklediği hisse ve tarih aralıkları değişebilir.
 
-### Sonraki aşamalar
-1. Teknik gösterge kapsamını genişlet: MACD, Bollinger Bantları, SMA200, ATR, hacim göstergeleri. **SMA200 için veri çekme süresini en az 200 işlem gününü kapsayacak şekilde kontrol et.**
-2. Gösterge hesaplamalarını bilinen örnekler ve sınır durumlarıyla test et; veri kontrolü için hatalı veri senaryoları ekle.
-3. Şirket adından arama için güncellenebilir ve kapsamlı BIST sembol listesi oluştur.
-4. Streamlit arayüzü ve grafikler geliştir.
-5. Makine öğrenmesi için 5 işlem günü ileri yön etiketleri, kronolojik eğitim/test ayrımı ve veri sızıntısı önlemleri oluştur.
-6. Basit temel model ile Logistic Regression, Random Forest ve uygun görülürse XGBoost'u karşılaştır; accuracy, precision, recall, F1 ve backtest raporla.
-7. Bitirme raporu, yöntem, test çıktıları ve sunum materyallerini hazırla.
+### Testler
 
-### Bilinen sınırlar / teknik borç
-- `teknik_analizi_yorumla()` şimdilik `print()` kullanıyor; web arayüzünde kullanılmak üzere yapılandırılmış sonuç döndürmesi planlanıyor.
-- RSI hesaplama yöntemi önceki EWM sürümünden Wilder'ın SMA ile başlatılan sürümüne değiştirilmiş olabilir; sayısal sonuçlar test edilmeli.
-- Yalnızca 50 işlem günü şartı, ileride SMA200 eklendiğinde yeterli olmayacak.
-- Veriler Yahoo Finance kaynaklıdır; kapsama, güncellik ve düzeltilmiş fiyat politikası belgelenmeli.
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
+```
 
-**Checkpoint sonucu:** Veri indirme, kalite kontrolü ve temel teknik analiz tek giriş noktasında birleştirildi. Henüz makine öğrenmesi modeli veya doğrulanmış tahmin performansı yok.
+Son doğrulanan geliştirme aşamasında **31 test** geçmiştir. Bu sayı yeni özelliklerle artacaktır.
+
+## Hesaplanan göstergeler
+
+### Teknik analiz
+
+- Hareketli ortalamalar: **MA20, MA50, MA200**
+- **RSI(14)**, **MACD(12, 26, 9)**
+- **Bollinger Bantları (20)**
+- **ATR(14)** ve fiyatın yüzdesi olarak ATR
+- **20 günlük ortalama hacim** ve hacim oranı
+- Önceki 20 güne dayalı **destek/direnç** seviyeleri
+
+### Geçmiş getiri
+
+| Dönem | Yaklaşık işlem günü | Hesaplama |
+| --- | ---: | --- |
+| 6 ay | 126 | `(Close[t] / Close[t-126] - 1) * 100` |
+| 12 ay | 252 | `(Close[t] / Close[t-252] - 1) * 100` |
+| 24 ay | 504 | `(Close[t] / Close[t-504] - 1) * 100` |
+
+Bunlar **geçmiş gerçekleşmiş getiriler** olup ileriye yönelik tahmin değildir. İşlem günü sayıları yaklaşık takvim karşılıklarıdır; eksik kayıtlar zaman pencerelerini kaydırabilir.
+
+### Risk analizi
+
+- Günlük yüzdesel getiri
+- **Yıllıklandırılmış volatilite:** ilgili dönemdeki günlük getirilerin örnek standart sapması × `sqrt(252)`
+- **Maksimum düşüş (Maximum Drawdown):** seçilen aralıkta önceki zirveden sonraki en büyük yüzde gerileme
+- Tüm mevcut geçmiş için maksimum düşüş ve güncel zirveden düşüş
+
+Dönemsel maksimum düşüş, 126/252/504 günlük aralıklar için başlangıç günü dahil **127/253/505 kapanış fiyatı** üzerinden hesaplanır. Yeterli veri yoksa sonuç gösterilmez.
+
+## Veri kalitesi ve bilinen sınırlamalar
+
+- Kaynak Yahoo Finance'tır; tarihsel kayıtlar eksik, gecikmeli veya sonradan revize edilmiş olabilir.
+- `son_eksik_gunu_temizle()` son kaydı kontrol eder; geçmişteki tüm eksik günleri kendiliğinden onarmaz.
+- Eksik hafta içi tarihleri taranır. **BIST tatil takvimi şu anda yalnızca 2026 kayıtlarıyla başlamıştır**; 2016–2025 henüz tamamlanmadığından tüm eksik hafta içi tarihleri veri hatası değildir.
+- 2026 takviminde **tam gün kapanışlar** filtrelenir; **yarım gün seanslar** işlem günü kabul edilir.
+- 12 Ekim 2026 tarihinin sorgulanan veri kaynağında bulunmadığı gözlemlenmiştir; bu tarihin fiyat kaydı alternatif kaynakla henüz doğrulanmamıştır. Eksik fiyatlar tahmin edilerek doldurulmaz.
+- Hisseler arası kıyaslamada ortak bitiş tarihi henüz zorunlu tutulmuyor.
+- Fiyat getirileri enflasyona göre düzeltilmiş reel getiri değildir. Veri sağlayıcısının fiyat düzeltme yaklaşımı ayrıca doğrulanmalıdır.
+
+## Yol haritası
+
+1. **Veri bütünlüğü:** 2016–2025 resmî BIST takvimini kaynaklarıyla tamamlamak; takvim kapsamı ve eksik işlem günlerini test etmek.
+2. **Çoklu hisse karşılaştırması:** aynı tarih itibarıyla 6/12/24 aylık getiri, volatilite ve maksimum düşüşü kıyaslamak; eksik verileri işaretlemek, CSV raporu üretmek.
+3. **Temel analiz:** şirket finansalları ve sektör bazlı karşılaştırmalar.
+4. **Açıklanabilir puanlama:** geçmiş getiri, risk, teknik ve temel göstergeleri ayrı ayrı değerlendirmek.
+5. **Geriye dönük test:** ileriye bilgi sızdırmadan, zaman sıralı doğrulama ve uygun kıyas ölçütleriyle performans incelemek.
+6. **İsteğe bağlı ileri aşamalar:** makine öğrenmesi ve Streamlit arayüzü.
+
+## Geliştirme notları
+
+- İşlem günü sayısı ile takvim günü aynı şey değildir.
+- `NaN` her zaman hesaplama hatası değildir; yeterli geçmiş veri bulunmamasını gösterebilir.
+- Volatilite yıllıklandırılmış bir ölçüdür; 6 aylık toplam getiriyle aynı zaman ölçeğinde değildir.
+- Maksimum düşüş hesabında **zirve-dip sırası** korunmalıdır.
+- Her yeni modül otomatik testlerle doğrulanmalı, anlamlı geliştirme paketleri Git'e commit edilmelidir.
+
+## Lisans
+
+Henüz bir lisans seçilmemiştir.

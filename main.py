@@ -6,7 +6,13 @@ from src.veri_cekme import hisse_verisi_cek
 
 from src.veri_kontrol import (
     veri_kontrol_et,
-    son_eksik_gunu_temizle
+    son_eksik_gunu_temizle,
+    eksik_hafta_ici_gunlerini_bul
+)
+
+from src.bist_takvimi import (
+    bist_tatillerini_filtrele,
+    takvimi_eksik_yillari_bul
 )
 
 from src.teknik_analiz import (
@@ -79,8 +85,38 @@ def main():
         return
 
     # 4. Son eksik islem gununu temizle
+    print("\nTEMIZLEME ONCESI SON 5 GUN:")
+    print(veriler.tail())
     veriler = son_eksik_gunu_temizle(veriler)
+    
+    # Eksik hafta ici tarihlerini kontrol et
+    eksik_gunler = eksik_hafta_ici_gunlerini_bul(veriler)
+    print("\n===== TATIL FILTRESI SONRASI EKSIK TARIHLER =====")
+    eksik_gunler = bist_tatillerini_filtrele(eksik_gunler)
 
+    eksik_takvim_yillari = takvimi_eksik_yillari_bul(veriler)
+
+    if eksik_takvim_yillari:
+        print(
+            "UYARI: BIST tatil takvimi eksik yillar:",
+            eksik_takvim_yillari
+        )
+
+    
+
+    print("\n========== EKSIK TARIH KONTROLU ==========")
+
+    print(f"Eksik hafta ici tarihi: {len(eksik_gunler)}")
+
+    print("\nSon 10 eksik tarih:")
+
+    for tarih in eksik_gunler[-10:]:
+        print(tarih.strftime("%Y-%m-%d"))
+
+    print("=========================================")
+
+    print("\nTEMIZLEME SONRASI SON 5 GUN:")
+    print(veriler.tail())
     # 5. Veri kalite kontrolu
     uygun_mu, mesaj = veri_kontrol_et(veriler)
 

@@ -161,3 +161,35 @@ def son_eksik_gunu_temizle(veriler):
         veriler = veriler.iloc[:-1].copy()
 
     return veriler
+
+def eksik_hafta_ici_gunlerini_bul(veriler):
+    """
+    Veri setindeki eksik hafta ici tarihlerini bulur.
+
+    Not:
+    Resmi BIST tatilleri henuz haric tutulmaz.
+    Bu nedenle bulunan her tarih veri hatasi degildir.
+    """
+
+    if veriler.empty:
+        return pd.DatetimeIndex([])
+
+    tarihler = pd.DatetimeIndex(
+        pd.to_datetime(veriler.index)
+    ).normalize()
+
+    tarihler = tarihler.sort_values().unique()
+
+    beklenen_tarihler = pd.bdate_range(
+        start=tarihler.min(),
+        end=tarihler.max()
+    )
+
+    eksik_tarihler = beklenen_tarihler.difference(
+        tarihler
+    )
+
+    return eksik_tarihler
+
+
+    
