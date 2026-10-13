@@ -1,25 +1,57 @@
+
 import pandas as pd
+
 from src.hisse_arama import hisse_kodu_bul
 from src.veri_cekme import hisse_verisi_cek
+
+from src.veri_kontrol import (
+    veri_kontrol_et,
+    son_eksik_gunu_temizle
+)
+
 from src.teknik_analiz import (
     teknik_gostergeleri_hesapla,
     teknik_analizi_yorumla
 )
-from src.veri_kontrol import veri_kontrol_et, son_eksik_gunu_temizle
 
-
-from src.grafik import (
-    fiyat_grafigi_olustur,
-    rsi_grafigi_olustur,
-    macd_grafigi_olustur,
-    birlesik_grafik_olustur
+from src.getiri_analizi import (
+    gecmis_getirileri_hesapla
 )
 
-from src.getiri_analizi import gecmis_getirileri_hesapla
+from src.risk_analizi import (
+    risk_analizi_hesapla,
+    donemsel_maksimum_dusus_hesapla,
+    donemsel_volatilite_hesapla
+)
 
-from src.risk_analizi import risk_analizi_hesapla
+from src.grafik import birlesik_grafik_olustur
 
 
+# ==========================================
+# YUZDE FORMATLAMA
+# ==========================================
+
+def yuzde_formatla(deger):
+    """
+    Yuzde degerlerini okunabilir bicimde gosterir.
+
+    Pozitif: +25.50%
+    Negatif: -15.20%
+    Sifir:    0.00%
+    Eksik:   Veri yok
+    """
+
+    if pd.isna(deger):
+        return "Veri yok"
+
+    isaret = "+" if deger > 0 else ""
+
+    return f"{isaret}{deger:.2f}%"
+
+
+# ==========================================
+# ANA PROGRAM
+# ==========================================
 
 def main():
 
@@ -30,7 +62,7 @@ def main():
         "\nAnaliz etmek istediginiz hisse adi veya kodu: "
     )
 
-    # 2. Hisse adini borsa koduna donustur
+    # 2. Hisse kodunu bul
     hisse_kodu = hisse_kodu_bul(arama)
 
     if hisse_kodu is None:
@@ -46,10 +78,7 @@ def main():
         print("\nHisse verileri alinamadi.")
         return
 
-       
-       
- 
-    # 4. Son islem gunundeki eksik fiyatlari kontrol et
+    # 4. Son eksik islem gununu temizle
     veriler = son_eksik_gunu_temizle(veriler)
 
     # 5. Veri kalite kontrolu
@@ -61,75 +90,171 @@ def main():
         print("Analiz durduruldu.")
         return
 
-    # 6. Teknik gostergeleri hesapla
-    analiz = teknik_gostergeleri_hesapla(veriler)       
-    # Uzun vadeli gecmis getirileri hesapla
+    # ==========================================
+    # 6. TUM ANALIZLERI HESAPLA
+    # ==========================================
+
+    analiz = teknik_gostergeleri_hesapla(veriler)
+
     analiz = gecmis_getirileri_hesapla(analiz)
-    analiz = risk_analizi_hesapla(analiz)   
+
+    analiz = risk_analizi_hesapla(analiz)
+
+    analiz = donemsel_maksimum_dusus_hesapla(analiz)
+
+    analiz = donemsel_volatilite_hesapla(analiz)
+
     son = analiz.iloc[-1]
+
+    print("\n========== VERI SETI KONTROLU ==========")
+    print(f"Toplam islem gunu: {len(analiz)}")
+    print(f"Ilk tarih: {analiz.index.min()}")
+    print(f"Son tarih: {analiz.index.max()}")
+    print(f"Eksik kapanis sayisi: {analiz['Close'].isna().sum()}")
+    print("========================================")
+
+    # ==========================================
+    # 7. UZUN VADELI GETIRI ANALIZI
+    # ==========================================
 
     print("\n========== UZUN VADELI GETIRI ANALIZI ==========")
 
-    donemler = {
+    getiri_donemleri = {
         "6 Aylik": "Getiri_6A",
         "12 Aylik": "Getiri_12A",
         "24 Aylik": "Getiri_24A"
     }
 
-    for donem, sutun in donemler.items():
+    for donem, sutun in getiri_donemleri.items():
+
         deger = son[sutun]
 
-        if pd.isna(deger):
-            print(f"{donem} Getiri: Yetersiz gecmis veri")
-        else:
-            print(f"{donem} Getiri: %{deger:.2f}")
+        print(
+            f"{donem} Getiri: {yuzde_formatla(deger)}"
+        )
 
+    print("================================================")
 
     # ==========================================
-    # RISK ANALIZI SONUCLARI
+    # 8. GENEL RISK ANALIZI
     # ==========================================
-
-    son = analiz.iloc[-1]
 
     print("\n========== RISK ANALIZI ==========")
 
     volatilite = son["Volatilite_252"]
+
     maksimum_dusus = son["Max_Drawdown"]
+
     guncel_dusus = son["Drawdown"]
 
-    if pd.isna(volatilite):
-        print("Yillik Volatilite: Yetersiz veri")
-    else:
-        print(f"Yillik Volatilite: %{volatilite:.2f}")
+    print(
+        "Yillik Volatilite: "
+        f"{yuzde_formatla(volatilite)}"
+    )
 
-    print(f"Maksimum Dusus: %{maksimum_dusus:.2f}")
-    print(f"Guncel Zirveden Dusus: %{guncel_dusus:.2f}")
+    print(
+        "Maksimum Dusus (Tum Gecmis): "
+        f"{yuzde_formatla(maksimum_dusus)}"
+    )
+
+    print(
+        "Guncel Zirveden Dusus: "
+        f"{yuzde_formatla(guncel_dusus)}"
+    )
 
     print("=================================")
 
-    
-    print("================================================")
+    # ==========================================
+    # 9. DONEMSEL GETIRI / RISK KARSILASTIRMASI
+    # ==========================================
+
+    print(
+        "\n========== DONEMSEL GETIRI / RISK =========="
+    )
+
+    print(
+        f"{'Donem':<12}"
+        f"{'Getiri':>14}"
+        f"{'Volatilite':>16}"
+        f"{'Maks. Dusus':>16}"
+    )
+
+    print("-" * 58)
+
+    donemler = [
+        (
+            "6 Ay",
+            "Getiri_6A",
+            "Volatilite_6A",
+            "MDD_6A"
+        ),
+        (
+            "12 Ay",
+            "Getiri_12A",
+            "Volatilite_12A",
+            "MDD_12A"
+        ),
+        (
+            "24 Ay",
+            "Getiri_24A",
+            "Volatilite_24A",
+            "MDD_24A"
+        )
+    ]
+
+    for ad, getiri, volatilite, mdd in donemler:
+
+        print(
+            f"{ad:<12}"
+            f"{yuzde_formatla(son[getiri]):>14}"
+            f"{yuzde_formatla(son[volatilite]):>16}"
+            f"{yuzde_formatla(son[mdd]):>16}"
+        )
+
+    print("=" * 58)
+
+    # ==========================================
+    # 10. SON 5 GUN ATR ANALIZI
+    # ==========================================
 
     print("\n=== SON 5 GUN ATR ANALIZI ===")
+
     print(
         analiz[
-            ["Close", "High", "Low", "ATR14", "ATR_Yuzde"]
+            [
+                "Close",
+                "High",
+                "Low",
+                "ATR14",
+                "ATR_Yuzde"
+            ]
         ]
         .tail()
         .round(2)
     )
 
+    # ==========================================
+    # 11. SON 5 GUN HACIM ANALIZI
+    # ==========================================
 
-    
     print("\n=== SON 5 GUNLUK HACIM ANALIZI ===")
+
     print(
         analiz[
-            ["Volume", "Hacim_MA20", "Hacim_Orani"]
-        ].tail().round(2)
+            [
+                "Volume",
+                "Hacim_MA20",
+                "Hacim_Orani"
+            ]
+        ]
+        .tail()
+        .round(2)
     )
 
+    # ==========================================
+    # 12. SON 5 ISLEM GUNU TEKNIK ANALIZ
+    # ==========================================
 
-    # 7. Son 5 islem gununu goster
     print("\n=== SON 5 ISLEM GUNU ===")
 
     print(
@@ -146,23 +271,48 @@ def main():
                 "BB_Ust",
                 "BB_Alt"
             ]
-            ].tail().round(2)
-        )
-    print("\n=== SON 5 GUN DESTEK VE DIRENC ===")
-    print(
-        analiz[
-            ["Close", "Destek20", "Direnc20"]
         ]
         .tail()
         .round(2)
     )
-    # 8. Teknik analiz yorumlarini goster
+
+    # ==========================================
+    # 13. DESTEK VE DIRENC
+    # ==========================================
+
+    print("\n=== SON 5 GUN DESTEK VE DIRENC ===")
+
+    print(
+        analiz[
+            [
+                "Close",
+                "Destek20",
+                "Direnc20"
+            ]
+        ]
+        .tail()
+        .round(2)
+    )
+
+    # ==========================================
+    # 14. TEKNIK ANALIZ YORUMLARI
+    # ==========================================
+
     teknik_analizi_yorumla(analiz)
-    #fiyat_grafigi_olustur(analiz, hisse_kodu)
-    #rsi_grafigi_olustur(analiz, hisse_kodu)
-    #macd_grafigi_olustur(analiz, hisse_kodu)
-    
-    birlesik_grafik_olustur(analiz, hisse_kodu)
+
+    # ==========================================
+    # 15. BIRLESIK GRAFIK
+    # ==========================================
+
+    birlesik_grafik_olustur(
+        analiz,
+        hisse_kodu
+    )
+
+
+# ==========================================
+# PROGRAM BASLANGICI
+# ==========================================
 
 if __name__ == "__main__":
     main()
