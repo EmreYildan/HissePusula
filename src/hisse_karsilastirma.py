@@ -161,6 +161,15 @@ def hisseleri_karsilastir(hisse_kodlari):
         )
     )
 
+    sonuclar["Eksik_Gun_Detaylari"] = sonuclar["Hisse"].map(
+        lambda hisse: "; ".join(
+            f"{kayit['tarih']}: {kayit['kategori']}"
+            for kayit in kalite_raporlari[hisse].get(
+                "eksik_gun_detaylari", []
+            )
+        )
+    )
+
     # 7. VERI YETERLILIGINI KONTROL ET
     sonuclar = veri_yeterliligini_kontrol_et(sonuclar)
 

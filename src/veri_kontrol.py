@@ -288,6 +288,7 @@ def veri_kalitesi_raporu(veriler):
         "tekrar_tarih": tekrar_tarih,
         "eksik_deger": eksik_deger,
         "gecersiz_kapanis": gecersiz_kapanis,
+        "eksik_gun_detaylari": [],
 
         "eksik_hafta_ici": [
             tarih.strftime("%Y-%m-%d")
@@ -299,13 +300,61 @@ def veri_kalitesi_raporu(veriler):
             for tarih in dogrulanamayan_gunler
         }),
 
+        "eksik_gun_detaylari": [
+            kayit
+            for kayit in eksik_gunleri_siniflandir(veriler)
+            if kayit["kategori"] != "Tam gun tatil"
+        ],
+
         "takvimi_tanimli_bosluklar": [
             tarih.strftime("%Y-%m-%d")
             for tarih in takvimi_tanimli_bosluklar
         ]
+
+        
     }
 
 
+def eksik_gunleri_siniflandir(veriler):
+    """
+    Eksik hafta ici tarihlerini BIST takvimine gore
+    siniflandirir.
+
+    Tam gun tatiller raporlanir ancak veri hatasi
+    olarak degerlendirilmez.
+    """
+    from src.bist_takvimi import bist_takvimini_oku
+
+    eksik_tarihler = eksik_hafta_ici_gunlerini_bul(veriler)
+    takvim = bist_takvimini_oku()
+
+    takvim_durumu = {
+        tarih.strftime("%Y-%m-%d"): durum
+        for tarih, durum in zip(
+            takvim["Tarih"], takvim["Durum"]
+        )
+    }
+
+    sonuc = []
+
+    for tarih in eksik_tarihler:
+        tarih_str = tarih.strftime("%Y-%m-%d")
+        durum = takvim_durumu.get(tarih_str)
+
+        if durum == "Kapali":
+            kategori = "Tam gun tatil"
+        elif durum == "Yarim Gun":
+            kategori = "Yarim islem gunu - veri eksik"
+        else:
+            kategori = "Aciklanamayan eksik gun"
+
+        sonuc.append({
+            "tarih": tarih_str,
+            "kategori": kategori
+        })
+
+    return sonuc
 
 
-    
+
+
