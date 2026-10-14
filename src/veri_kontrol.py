@@ -192,4 +192,120 @@ def eksik_hafta_ici_gunlerini_bul(veriler):
     return eksik_tarihler
 
 
+
+def veri_kalitesi_raporu(veriler):
+    """
+    Fiyat verisinin temel butunlugunu kontrol eder.
+
+    Eksik islem gunlerini de raporlar.
+    Ancak bu fonksiyon eksik fiyat uretmez.
+    """
+
+    import pandas as pd
+
+    if veriler is None or veriler.empty:
+        return {
+            "durum": "HATALI",
+            "mesaj": "Veri seti bos.",
+            "satir_sayisi": 0,
+            "tekrar_tarih": 0,
+            "eksik_deger": 0,
+            "gecersiz_kapanis": 0,
+            "eksik_hafta_ici": []
+        }
+
+    tarihler = pd.DatetimeIndex(
+        pd.to_datetime(veriler.index)
+    )
+
+    tekrar_tarih = int(
+        tarihler.duplicated().sum()
+    )
+
+    eksik_deger = int(
+        veriler.isna().sum().sum()
+    )
+
+    gecersiz_kapanis = 0
+
+    if "Close" in veriler.columns:
+        gecersiz_kapanis = int(
+            (veriler["Close"] <= 0).sum()
+        )
+
+    eksik_hafta_ici = eksik_hafta_ici_gunlerini_bul(
+        veriler
+    )
+
+    from src.bist_takvimi import (
+    bist_tatillerini_filtrele,
+    takvimi_tanimli_yillar
+    )
+    
+
+    aciklanamayan_gunler = bist_tatillerini_filtrele(
+        eksik_hafta_ici
+    )
+    tanimli_yillar = set(takvimi_tanimli_yillar())
+
+    dogrulanamayan_gunler = [
+        tarih
+        for tarih in aciklanamayan_gunler
+        if tarih.year not in tanimli_yillar
+    ]
+
+    takvimi_tanimli_bosluklar = [
+        tarih
+        for tarih in aciklanamayan_gunler
+        if tarih.year in tanimli_yillar
+    ]
+
+    kritik_hata = (
+        tekrar_tarih > 0
+        or eksik_deger > 0
+        or gecersiz_kapanis > 0
+        or not tarihler.is_monotonic_increasing
+        or "Close" not in veriler.columns
+    )
+
+    if kritik_hata:
+        durum = "HATALI"
+        mesaj = "Veri butunlugu hatasi bulundu."
+
+    elif len(aciklanamayan_gunler) > 0:
+        durum = "UYARI"
+        mesaj = "Aciklanamayan hafta ici veri bosluklari var."
+
+    else:
+        durum = "TEMIZ"
+        mesaj = "Temel veri kontrolleri basarili."
+
+    
+    return {
+        "durum": durum,
+        "mesaj": mesaj,
+        "satir_sayisi": len(veriler),
+        "tekrar_tarih": tekrar_tarih,
+        "eksik_deger": eksik_deger,
+        "gecersiz_kapanis": gecersiz_kapanis,
+
+        "eksik_hafta_ici": [
+            tarih.strftime("%Y-%m-%d")
+            for tarih in aciklanamayan_gunler
+        ],
+
+        "takvimi_eksik_yillar": sorted({
+            tarih.year
+            for tarih in dogrulanamayan_gunler
+        }),
+
+        "takvimi_tanimli_bosluklar": [
+            tarih.strftime("%Y-%m-%d")
+            for tarih in takvimi_tanimli_bosluklar
+        ]
+    }
+
+
+
+
     

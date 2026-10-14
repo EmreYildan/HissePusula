@@ -13,6 +13,8 @@ from src.risk_analizi import (
     donemsel_volatilite_hesapla
 )
 
+from src.veri_kontrol import veri_kalitesi_raporu
+
 
 DONEMLER = ["6A", "12A", "24A"]
 
@@ -39,15 +41,18 @@ def ortak_tarihleri_bul(veri_sozlugu):
     return ortak.sort_values()
 
 
+
 def hisseleri_karsilastir(hisse_kodlari):
     """
-    Hisseleri ortak islem tarihleri
-    uzerinden karsilastirir.
+    Hisseleri ortak son analiz tarihinde karsilastirir.
+
+    Her hissenin getiri ve risk hesaplamasi kendi
+    tarihsel verileri uzerinde yapilir.
     """
 
     veri_sozlugu = {}
 
-    # 1. VERILERI TOPLA
+    # 1. HISSE VERILERINI TOPLA
     for hisse_kodu in hisse_kodlari:
 
         hisse_kodu = hisse_kodu.strip().upper()
@@ -76,40 +81,55 @@ def hisseleri_karsilastir(hisse_kodlari):
     if not veri_sozlugu:
         return pd.DataFrame()
 
-    # 2. ORTAK TARIHLERI BUL
+    # 2. KAYNAK VERI KALITESINI KONTROL ET
+    kalite_raporlari = {
+        hisse: veri_kalitesi_raporu(veri)
+        for hisse, veri in veri_sozlugu.items()
+    }
+
+    # 3. ORTAK SON ANALIZ TARIHINI BUL
     ortak_tarihler = ortak_tarihleri_bul(veri_sozlugu)
 
     if ortak_tarihler.empty:
         print("Hisseler arasinda ortak islem tarihi bulunamadi.")
         return pd.DataFrame()
 
+    analiz_tarihi = ortak_tarihler.max()
+
     print(
         f"\nOrtak analiz tarihi: "
-        f"{ortak_tarihler.max().date()}"
+        f"{analiz_tarihi.date()}"
     )
 
-    # 3. GETIRI VE RISK ANALIZI
+    # 4. GETIRI VE RISK ANALIZLERI
     sonuclar = []
 
     for hisse_kodu, veriler in veri_sozlugu.items():
 
-        # Yalnizca ortak tarihler
-        ortak_veriler = veriler.loc[ortak_tarihler].copy()
+        # Yalnizca analiz tarihinden sonrasini cikar.
+        # Gecmisteki hisselere ozel tarihler korunur.
+        analiz_verileri = veriler.loc[
+            veriler.index <= analiz_tarihi
+        ].copy()
 
-        analiz = gecmis_getirileri_hesapla(ortak_veriler)
+        if analiz_verileri.empty:
+            continue
+
+        analiz = gecmis_getirileri_hesapla(analiz_verileri)
         analiz = donemsel_maksimum_dusus_hesapla(analiz)
         analiz = donemsel_volatilite_hesapla(analiz)
 
-        son = analiz.iloc[-1]
+        # Analiz tarihi tum hisselerde ortak oldugu
+        # icin son satir ayni tarihe aittir.
+        son = analiz.loc[analiz_tarihi]
 
         satir = {
             "Hisse": hisse_kodu,
-            "Analiz_Tarihi": ortak_tarihler.max().date(),
+            "Analiz_Tarihi": analiz_tarihi.date(),
             "Veri_Gunu": len(analiz)
         }
 
         for donem in DONEMLER:
-
             satir[f"Getiri_{donem}"] = son[
                 f"Getiri_{donem}"
             ]
@@ -124,8 +144,28 @@ def hisseleri_karsilastir(hisse_kodlari):
 
         sonuclar.append(satir)
 
-    sonuc_tablosu = pd.DataFrame(sonuclar)
-    return veri_yeterliligini_kontrol_et(sonuc_tablosu) 
+    if not sonuclar:
+        return pd.DataFrame()
+
+    # 5. SONUCLARI TABLOYA DONUSTUR
+    sonuclar = pd.DataFrame(sonuclar)
+
+    # 6. VERI KALITESI BILGILERINI EKLE
+    sonuclar["Veri_Kalitesi"] = sonuclar["Hisse"].map(
+        lambda hisse: kalite_raporlari[hisse]["durum"]
+    )
+
+    sonuclar["Eksik_Gun_Sayisi"] = sonuclar["Hisse"].map(
+        lambda hisse: len(
+            kalite_raporlari[hisse]["eksik_hafta_ici"]
+        )
+    )
+
+    # 7. VERI YETERLILIGINI KONTROL ET
+    sonuclar = veri_yeterliligini_kontrol_et(sonuclar)
+
+    return sonuclar
+
 
 
 def hisseleri_sirala(sonuclar, donem="12A", kriter="Getiri"):

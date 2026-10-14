@@ -7,6 +7,7 @@ from src.bist_takvimi import (
     bist_tatillerini_filtrele,
     takvimi_eksik_yillari_bul
 )
+from unittest.mock import patch
 
 
 class TestBistTakvimi(unittest.TestCase):
@@ -52,32 +53,20 @@ class TestBistTakvimi(unittest.TestCase):
         )
 
     def test_tanimsiz_yil(self):
-        """Tanimlanmamis yil hata vermeli."""
-
         with self.assertRaises(ValueError):
-            bist_tatillerini_getir(2025)
+            bist_tatillerini_getir(2015)
 
     def test_tanimsiz_yil_filtreleme(self):
-        """Tanimlanmamis yilin tarihleri korunmali."""
-
-        eksik_tarihler = pd.to_datetime([
-            "2025-01-01",
-            "2026-01-01",
+        eksik_tarihler = pd.DatetimeIndex([
+            "2023-01-02",
             "2026-10-12"
         ])
 
-        sonuc = bist_tatillerini_filtrele(
-            eksik_tarihler
-        )
-
-        beklenen = pd.DatetimeIndex([
-            "2025-01-01",
-            "2026-10-12"
-        ])
+        sonuc = bist_tatillerini_filtrele(eksik_tarihler)
 
         pd.testing.assert_index_equal(
             sonuc,
-            beklenen
+            eksik_tarihler
         )
         
     def test_takvimi_eksik_yillar(self):
@@ -95,7 +84,7 @@ class TestBistTakvimi(unittest.TestCase):
 
         sonuc = takvimi_eksik_yillari_bul(veriler)
 
-        self.assertEqual(sonuc, [2024, 2025])
+        self.assertEqual(sonuc, [])
 
     def test_bos_veri_takvim_kontrolu(self):
         """Bos veri setinde eksik yil olmamali."""
@@ -128,6 +117,30 @@ class TestBistTakvimi(unittest.TestCase):
             beklenen
         )
 
+        
+    def test_2024_yarim_gun_korunmali(self):
+        tarihler = pd.DatetimeIndex([
+            "2024-04-09",
+            "2024-04-10"
+        ])
+
+        sonuc = bist_tatillerini_filtrele(tarihler)
+
+        beklenen = pd.DatetimeIndex([
+            "2024-04-09"
+        ])
+
+        pd.testing.assert_index_equal(sonuc, beklenen)
+
+
+    def test_2026_aciklanamayan_gun_korunmali(self):
+        tarihler = pd.DatetimeIndex([
+            "2026-10-12"
+        ])
+
+        sonuc = bist_tatillerini_filtrele(tarihler)
+
+        pd.testing.assert_index_equal(sonuc, tarihler)
 
 
 

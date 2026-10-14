@@ -14,7 +14,7 @@ TAKVIM_DOSYASI = (
     PROJE_KOKU / "data" / "processed" / "bist_tatilleri.csv"
 )
 
-
+TAMAMLANAN_YILLAR = set(range(2016, 2027))
 # ==========================================
 # BIST TATIL TAKVIMINI OKU
 # ==========================================
@@ -59,18 +59,16 @@ def bist_takvimini_oku():
 
 def takvimi_tanimli_yillar():
     """
-    CSV'deki tarihlerin ait oldugu yillari dondurur.
-
-    Not: Bir yilin CSV'de bulunmasi, o yilin
-    tum tatillerinin eksiksiz oldugunu tek
-    basina kanitlamaz.
+    Takvimi tamamlanmis ve CSV'de kaydi
+    bulunan yillari dondurur.
     """
-
     takvim = bist_takvimini_oku()
 
-    return sorted(
+    csv_yillari = set(
         takvim["Tarih"].dt.year.unique().tolist()
     )
+
+    return sorted(csv_yillari & TAMAMLANAN_YILLAR)
 
 
 # ==========================================
